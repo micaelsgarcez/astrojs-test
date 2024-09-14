@@ -1,0 +1,43 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro'
+
+const { slug } = Astro.params
+console.log(slug)
+
+type PostsType = {
+  id: number
+  date: Date
+  slug: string
+  title: {
+    rendered: string
+  }
+  jetpack_featured_media_url?: string
+  excerpt: {
+    rendered: string
+  }
+  content: {
+    rendered: string
+  }
+}[]
+
+let res = await fetch(
+  `https://norian.studio/wp-json/wp/v2/posts?slug=${slug}&_embed`
+)
+let [post] = await res.json()
+
+// getStaticPaths() é exigido para sites Astro estáticos.
+// Se usar SSR, você não precisará dessa função.
+export async function getStaticPaths() {
+  let data = await fetch('https://norian.studio/wp-json/wp/v2/posts')
+  let posts: PostsType = await data.json()
+
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post: post }
+  }))
+}
+---
+
+<BlogPost {...post}>
+  <Fragment set:html={post.content.rendered} />
+</BlogPost>
